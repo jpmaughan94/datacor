@@ -1,6 +1,6 @@
 # Datacor website
 
-The homepage's **Data stories** section is built automatically from the `stories` folder. Add a story file, and Netlify rebuilds the site and puts it on the homepage, newest first.
+The homepage's **Data stories** and **Games** sections are built automatically from the `stories` and `games` folders. Add a file to either folder, and Netlify rebuilds the site and puts it on the homepage.
 
 ## What's here
 
@@ -8,6 +8,7 @@ The homepage's **Data stories** section is built automatically from the `stories
 |---|---|---|
 | `index.html` | Your homepage | Yes, for anything except the story list |
 | `stories/` | One `.html` file per story, plus an optional `.thumb.svg` picture for its homepage card | Add new stories here |
+| `games/` | One `.html` file per game, plus an optional `.thumb.svg` | Add new games here |
 | `build.js` | Writes the story list into the homepage | No |
 | `netlify.toml` | Tells Netlify to run `build.js` | No |
 
@@ -33,6 +34,23 @@ The homepage's **Data stories** section is built automatically from the `stories
 4. **Optional: add a picture** for the homepage card. Save an SVG with the same name ending `.thumb.svg` (e.g. `uk-housing.thumb.svg`) and it appears on the right of the featured card. Without one, the card is text only. To follow light and dark mode, use colours like `style="fill:var(--accent)"`.
 
 5. **Upload it on GitHub:** open the `stories` folder → **Add file** → **Upload files** → drag in the `.html` (and `.thumb.svg`) → **Commit changes**. Netlify rebuilds in about a minute.
+
+## Adding a new game
+Exactly like a story, but put the file in `games/` and use `game:` instead of `story:` in the card block:
+
+```html
+<meta name="game:title" content="Name of the game">
+<meta name="game:date" content="2026-12-01">
+<meta name="game:label" content="Football · Game">
+<meta name="game:summary" content="One or two sentences on how to play.">
+```
+Games appear as cards in the Games section, newest first. Link back with `<a href="../index.html">← Datacor</a>`.
+
+## Link previews (Reddit, Discord, WhatsApp, LinkedIn, X)
+The build adds preview tags to every story and game, and to the homepage, using the card details (title and summary).
+- **The preview picture** is a 1200 × 630 PNG with the same name as the page, ending `.og.png` (e.g. `uk-housing.og.png` next to `uk-housing.html`). For a story folder, use `og.png` inside the folder.
+- **No picture?** The page uses `og.png` from the top of the site instead.
+- **Check a preview** by pasting the page's address into [opengraph.xyz](https://www.opengraph.xyz). Sites cache previews, so a link already shared may take a while to update.
 
 ## Other things you can do
 - **Hide a story from the homepage** without deleting it: add `<meta name="story:draft" content="true">`. The page stays live at its address, so you can share it for review first.
