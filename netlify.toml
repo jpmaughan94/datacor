@@ -1,0 +1,7 @@
+# Tells Netlify how to build the site. You don't need to change anything here.
+[build]
+  command = "node build.js"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
