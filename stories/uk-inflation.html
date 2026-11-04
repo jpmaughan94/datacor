@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Per Cent, Then Everything Else — Your Name</title>
+<meta name="description" content="A scrolling data story on 25 years of UK inflation, from quiet target-hitting to the 2022 shock.">
+<!-- STORY CARD: the homepage builds its story list from these lines -->
+<meta name="story:title" content="Two per cent, then everything else">
+<meta name="story:date" content="2026-11-01">
+<meta name="story:label" content="Economy · 4 min read · Interactive">
+<meta name="story:summary" content="For two decades UK inflation mostly stayed close to the Bank of England's 2% target. Then, within a single year, it didn't. A scrolling look at 25 years of prices, from quiet target-hitting to the 2022 shock.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<!--
+  ================================================================
+  SCROLLYTELLING TEMPLATE — how to reuse this page for a new story
+  ================================================================
+  1. DATA      → edit the `DATA` array at the top of the <script>.
+  2. TEXT      → each <div class="step" data-step="N"> is one scroll step.
+                 Spans with data-fill="name" are filled from computed
+                 numbers (see `FILL`), so the words always match the data.
+  3. CHART     → each step number maps to a state in `STATES`.
+                 A state says how far to reveal the line, which mode to
+                 show ("line", "bars", "cumulative") and which notes to draw.
+  4. SOURCES   → update the Methods & sources section at the bottom.
+  ================================================================
+-->
+<style>
+  :root{
+    --paper:#f6f3ec; --ink:#16181d; --ink-2:#4a4f5a; --ink-3:#8a8f99; --rule:#d9d3c4;
+    --accent:#2f5d50; --hot:#c8553d; --card:#fbf9f4;
+    --serif:"Instrument Serif", Georgia, serif; --sans:"Inter", system-ui, sans-serif; --mono:"JetBrains Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --paper:#121416; --ink:#ecebe6; --ink-2:#b4b6bb; --ink-3:#7c8088; --rule:#2a2e33; --accent:#7fbfa9; --hot:#e8836b; --card:#16191c; }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .mono{font-family:var(--mono);font-size:.76rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+  .hot{color:var(--hot)} .acc{color:var(--accent)}
+
+  .topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+  .topbar .in{max-width:1180px;margin:0 auto;padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between}
+  .topbar a{text-decoration:none}
+  .topbar .back{font-family:var(--mono);font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)}
+  .topbar .back:hover{color:var(--accent)}
+  .progress{position:absolute;left:0;bottom:-1px;height:2px;background:var(--accent);width:0}
+
+  .head{max-width:820px;margin:0 auto;padding:96px 24px 56px;text-align:center}
+  .head h1{font-family:var(--serif);font-weight:400;font-size:clamp(3rem,8vw,6rem);line-height:.95;margin:20px 0 24px}
+  .head h1 em{color:var(--hot)}
+  .dek{font-size:1.25rem;color:var(--ink-2);max-width:40ch;margin:0 auto}
+  .byline{margin-top:32px}
+
+  .prose{max-width:660px;margin:0 auto;padding:0 24px}
+  .prose p{margin:0 0 1.2em}
+  .prose p.lead::first-letter{font-family:var(--serif);float:left;font-size:4.4rem;line-height:.8;padding:6px 10px 0 0;color:var(--accent)}
+
+  /* scrolly */
+  .scrolly{position:relative;display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:48px;max-width:1180px;margin:72px auto;padding:0 24px}
+  .graphic{position:sticky;top:80px;height:calc(100vh - 110px);display:flex;flex-direction:column;justify-content:center;grid-column:2;grid-row:1}
+  .graphic .frame{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:18px 18px 8px}
+  .graphic .ttl{display:flex;justify-content:space-between;gap:12px;margin-bottom:4px}
+  .graphic .ttl strong{font-weight:600;font-size:.98rem}
+  #chart{width:100%;height:auto;display:block}
+  .graphic .src{font-family:var(--mono);font-size:.68rem;color:var(--ink-3);padding:6px 2px}
+  .steps{grid-column:1;grid-row:1;padding:30vh 0 40vh}
+  .step{min-height:80vh;display:flex;align-items:center}
+  .step .box{background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--rule);border-radius:10px;padding:22px 24px;font-size:1.04rem;transition:border-color .3s,opacity .3s;opacity:.35}
+  .step.active .box{opacity:1;border-left-color:var(--accent)}
+  .step .box b{font-weight:600}
+  .step .big{display:block;font-family:var(--serif);font-size:2.8rem;line-height:1;margin-bottom:8px}
+  @media (max-width:860px){
+    .scrolly{display:block;padding:0 14px}
+    .graphic{top:62px;height:auto;padding-top:6px;z-index:5}
+    .graphic .frame{padding:12px 10px 4px}
+    .steps{position:relative;z-index:6;padding:20vh 0 30vh}
+    .step{min-height:90vh;align-items:flex-end}
+    .step .box{opacity:.96;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+    .step:not(.active) .box{opacity:.6}
+    #chartTag{display:none}
+    .axis text{font-size:22px}
+    .note text{font-size:24px !important}
+    .note .sub{font-size:20px}
+  }
+
+  /* chart text */
+  .axis text{font-family:var(--mono);font-size:12px;fill:var(--ink-3)}
+  .axis line{stroke:var(--rule)} .axis path{display:none}
+  .note text{font-family:var(--sans);font-size:13px;font-weight:600}
+  .note .sub{font-weight:400;fill:var(--ink-2)}
+
+  /* after */
+  .pull{max-width:960px;margin:40px auto 72px;padding:56px 24px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);display:grid;grid-template-columns:repeat(3,1fr);gap:28px;text-align:center}
+  .pull b{display:block;font-family:var(--serif);font-weight:400;font-size:3.4rem;line-height:1}
+  .pull span{font-size:.92rem;color:var(--ink-2)}
+  @media(max-width:700px){.pull{grid-template-columns:1fr}}
+  .prose h2{font-family:var(--serif);font-weight:400;font-size:2.2rem;line-height:1.1;margin:48px 0 16px}
+  .methods{max-width:660px;margin:64px auto 0;padding:28px 24px 80px;border-top:2px solid var(--ink)}
+  .methods h3{font-family:var(--mono);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+  .methods p,.methods li{font-size:.92rem;color:var(--ink-2)}
+  .methods ul{margin:10px 0 0 18px}
+  .methods li{margin:4px 0}
+  footer{border-top:1px solid var(--rule);padding:24px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a href="../index.html" class="back">← Your Name</a>
+    <span class="mono">Data story · Economy</span>
+  </div>
+  <div class="progress" id="progress"></div>
+</div>
+
+<header class="head">
+  <div class="mono">UK inflation, 2000–2025</div>
+  <h1>Two per cent, then <em>everything else</em></h1>
+  <p class="dek">For two decades, UK inflation mostly stayed close to the Bank of England's target. Then, within a single year, it didn't.</p>
+  <div class="byline mono">By Your Name · November 2026 · 4 min read</div>
+</header>
+
+<div class="prose">
+  <p class="lead">Inflation is the kind of number that matters most when nobody is talking about it. When prices rise steadily and slowly, households and businesses plan around it without a second thought. When they don't, it becomes the only number anyone talks about.</p>
+  <p>This story follows the UK's annual consumer price inflation rate from 2000 to 2025. It looks at what "normal" looked like, the shocks that broke it, and what a quarter-century of price rises adds up to. Scroll to follow the chart.</p>
+</div>
+
+<section class="scrolly" id="scrolly">
+  <div class="graphic">
+    <div class="frame">
+      <div class="ttl"><strong id="chartTitle">UK CPI inflation, annual average (%)</strong><span class="mono" id="chartTag">2000–2025</span></div>
+      <svg id="chart" viewBox="0 0 760 480" role="img" aria-label="Chart of UK CPI inflation from 2000 to 2025"></svg>
+      <div class="src">Source: ONS, CPI annual rate (series D7G7)</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step" data-step="0"><div class="box">
+      <span class="big acc">2%</span>
+      Since December 2003, the Bank of England's job has been to keep CPI inflation at <b>2%</b> a year. That's the dashed line, the benchmark for everything that follows.
+    </div></div>
+
+    <div class="step" data-step="1"><div class="box">
+      For most of the 2000s the job looked easy. From 2000 to 2007 inflation averaged just <b><span data-fill="avg0007"></span>%</b> a year, and it never once went above <span data-fill="max0007"></span>%.
+    </div></div>
+
+    <div class="step" data-step="2"><div class="box">
+      Then came the first jolts. Oil prices spiked as the financial crisis hit, and inflation reached <b class="hot">3.6%</b> in 2008. In 2011 a VAT rise from 17.5% to 20% and higher commodity prices pushed it to <b class="hot">4.5%</b>, more than double the target.
+    </div></div>
+
+    <div class="step" data-step="3"><div class="box">
+      Then it swung the other way. Oil prices roughly halved between 2014 and 2016, and in <b>2015</b> inflation averaged <b class="acc">0.0%</b>. Prices, on average, barely moved at all.
+    </div></div>
+
+    <div class="step" data-step="4"><div class="box">
+      <span class="big hot">9.1%</span>
+      Then 2022. Energy prices soared, and annual inflation hit <b>9.1%</b>, more than four times the target. In October 2022 the monthly rate peaked at <b class="hot">11.1%</b>, its highest in over 40 years.
+    </div></div>
+
+    <div class="step" data-step="5"><div class="box">
+      Seen year by year, missing the target is more common than it looks. In <b class="hot"><span data-fill="above"></span> of the <span data-fill="years"></span> years</b> inflation ran <b>above 2%</b>, and in <span data-fill="above3"></span> of them it was above 3%.
+    </div></div>
+
+    <div class="step" data-step="6"><div class="box">
+      <span class="big acc">£<span data-fill="final"></span></span>
+      Compounded together, those rates add up. A basket of shopping that cost <b>£100</b> in 2000 would cost about <b>£<span data-fill="final"></span></b> in 2025. Roughly <span data-fill="share2122"></span>% of that whole rise came in just the four years from 2022 to 2025.
+    </div></div>
+  </div>
+</section>
+
+<div class="pull">
+  <div><b class="hot">11.1%</b><span>peak monthly rate, October 2022</span></div>
+  <div><b><span data-fill="above"></span>/<span data-fill="years"></span></b><span>years above the 2% target</span></div>
+  <div><b class="acc">+<span data-fill="cumpct"></span>%</b><span>rise in prices since 2000</span></div>
+</div>
+
+<div class="prose">
+  <h2>What it means</h2>
+  <p>The headline lesson isn't that the Bank of England "failed". Most of the big misses came from shocks outside its control: oil, tax changes and a global energy crisis. The more useful lesson is about <b>planning</b>. A business or household budget built on "inflation is about 2%" would have been wrong in most years, and badly wrong in 2022 and 2023.</p>
+  <p>By 2025 inflation had come down a long way from its peak but was still running above target at 3.4%. That's a reminder that the path back to 2% is rarely a straight line.</p>
+</div>
+
+<div class="methods">
+  <h3>Methods &amp; sources</h3>
+  <p>Annual figures are the ONS Consumer Prices Index (CPI) 12-month rate, as calendar-year averages. The 2022 monthly peak is the ONS figure for October 2022. The "£100 basket" figure compounds each year's average rate from a 2000 base, so it's an approximation and won't exactly match an index-to-index calculation.</p>
+  <ul>
+    <li>Office for National Statistics, <a href="https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23">CPI annual rate, series D7G7</a></li>
+    <li>Context on the VAT rise, oil prices and the energy price cap: <a href="https://ukcalculator.com/uk-inflation-rate-history.html">UK inflation rate history</a></li>
+    <li>Analysis and charts: Your Name, built with D3.js</li>
+  </ul>
+</div>
+
+<footer><a href="../index.html" class="mono">← Back to all stories</a></footer>
+
+<script>
+(function(){
+  // ---------- 1. DATA ----------
+  const DATA = [
+    [2000,0.8],[2001,1.2],[2002,1.3],[2003,1.4],[2004,1.3],[2005,2.1],[2006,2.3],[2007,2.3],
+    [2008,3.6],[2009,2.2],[2010,3.3],[2011,4.5],[2012,2.8],[2013,2.6],[2014,1.5],[2015,0.0],
+    [2016,0.7],[2017,2.7],[2018,2.5],[2019,1.8],[2020,0.9],[2021,2.6],[2022,9.1],[2023,7.3],
+    [2024,2.5],[2025,3.4]
+  ].map(([year,cpi]) => ({year, cpi}));
+  const TARGET = 2;
+
+  // cumulative price level, 2000 = 100
+  let lvl = 100;
+  DATA.forEach((d,i) => { if (i) lvl *= 1 + d.cpi/100; d.index = lvl; });
+  const by = y => DATA.find(d => d.year === y);
+
+  // ---------- 2. NUMBERS USED IN THE TEXT ----------
+  const early = DATA.filter(d => d.year <= 2007);
+  const final = by(2025).index;
+  const FILL = {
+    avg0007: d3.mean(early, d => d.cpi).toFixed(1),
+    max0007: d3.max(early, d => d.cpi).toFixed(1),
+    above:   DATA.filter(d => d.cpi > TARGET).length,
+    above3:  DATA.filter(d => d.cpi > 3).length,
+    years:   DATA.length,
+    final:   Math.round(final),
+    cumpct:  Math.round(final - 100),
+    share2122: Math.round((final - by(2021).index) / (final - 100) * 100)
+  };
+  document.querySelectorAll('[data-fill]').forEach(el => { el.textContent = FILL[el.dataset.fill]; });
+
+  // ---------- 3. CHART SETUP ----------
+  const css = getComputedStyle(document.documentElement);
+  const C = n => css.getPropertyValue(n).trim();
+  const W = 760, H = 480, m = {t:26, r:28, b:36, l:44};
+  const svg = d3.select('#chart');
+  const x = d3.scaleLinear([1999.5, 2025.5], [m.l, W - m.r]);
+  const yPct = d3.scaleLinear([0, 10], [H - m.b, m.t]);
+  const yIdx = d3.scaleLinear([100, Math.ceil(final/20)*20], [H - m.b, m.t]);
+  const bw = (x(2001) - x(2000)) * 0.68;
+
+  const gGrid = svg.append('g').attr('class','axis').attr('transform',`translate(${m.l},0)`);
+  svg.append('g').attr('class','axis').attr('transform',`translate(0,${H-m.b})`)
+     .call(d3.axisBottom(x).tickValues([2000,2005,2010,2015,2020,2025]).tickFormat(d3.format('d')).tickSize(0).tickPadding(10));
+  function drawGrid(scale, fmt){
+    gGrid.transition().duration(700).call(d3.axisLeft(scale).ticks(5).tickFormat(fmt).tickSize(-(W-m.l-m.r)).tickPadding(8));
+  }
+  drawGrid(yPct, d => d + '%');
+
+  // target line
+  const target = svg.append('g');
+  target.append('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',yPct(TARGET)).attr('y2',yPct(TARGET))
+        .attr('stroke',C('--accent')).attr('stroke-width',1.5).attr('stroke-dasharray','5 4');
+  target.append('text').attr('x',W-m.r).attr('y',yPct(TARGET)-7).attr('text-anchor','end')
+        .attr('fill',C('--accent')).attr('font-family','JetBrains Mono, monospace').attr('font-size',12).text('2% target');
+
+  // bars
+  const bars = svg.append('g').selectAll('rect').data(DATA).join('rect')
+    .attr('x', d => x(d.year) - bw/2).attr('width', bw).attr('y', yPct(0)).attr('height', 0).attr('rx', 2)
+    .attr('fill', d => d.cpi > TARGET ? C('--hot') : C('--ink-3'));
+
+  // cumulative area
+  const area = d3.area().x(d => x(d.year)).y0(yIdx(100)).y1(d => yIdx(d.index)).curve(d3.curveMonotoneX);
+  const cum = svg.append('path').datum(DATA).attr('d', area).attr('fill', C('--accent')).attr('fill-opacity', 0);
+  const cumLine = svg.append('path').datum(DATA)
+    .attr('d', d3.line().x(d => x(d.year)).y(d => yIdx(d.index)).curve(d3.curveMonotoneX))
+    .attr('fill','none').attr('stroke',C('--accent')).attr('stroke-width',2.5).attr('opacity',0);
+
+  // line with reveal clip
+  const clip = svg.append('clipPath').attr('id','reveal').append('rect').attr('x',0).attr('y',0).attr('height',H).attr('width',0);
+  const gLine = svg.append('g').attr('clip-path','url(#reveal)');
+  const line = gLine.append('path').datum(DATA)
+    .attr('d', d3.line().x(d => x(d.year)).y(d => yPct(d.cpi)).curve(d3.curveMonotoneX))
+    .attr('fill','none').attr('stroke',C('--ink')).attr('stroke-width',2.5).attr('stroke-linejoin','round');
+  const dots = gLine.selectAll('circle').data(DATA).join('circle')
+    .attr('cx', d => x(d.year)).attr('cy', d => yPct(d.cpi)).attr('r', 3).attr('fill', C('--paper')).attr('stroke', C('--ink')).attr('stroke-width', 1.5);
+
+  const notes = svg.append('g').attr('class','note');
+  const band = svg.insert('rect', ':first-child').attr('y', m.t).attr('height', H-m.t-m.b).attr('fill', C('--hot')).attr('fill-opacity', 0);
+
+  // ---------- 4. STATES: one per scroll step ----------
+  // reveal: show the line up to this year. mode: line | bars | cumulative.
+  // notes: [year, label, sub, colour, dy] annotations. band: [fromYear, toYear] shaded range.
+  const hot = C('--hot'), acc = C('--accent'), ink = C('--ink');
+  const STATES = {
+    0: {reveal:1999, mode:'line', notes:[]},
+    1: {reveal:2007, mode:'line', band:[2000,2007], bandColour:acc,
+        notes:[[2003.5, 'Avg ' + FILL.avg0007 + '%', '2000–2007', acc, -70, 'mid']]},
+    2: {reveal:2011, mode:'line', notes:[[2008,'3.6%','2008 · financial crisis',hot,-34],[2011,'4.5%','2011 · VAT rise',hot,-34]]},
+    3: {reveal:2016, mode:'line', notes:[[2015,'0.0%','2015 · oil price slump',acc,-34]]},
+    4: {reveal:2025, mode:'line', notes:[[2022,'9.1%','2022 · energy shock',hot,-20,'end'],[2025,'3.4%','2025',ink,-26,'end']]},
+    5: {reveal:2025, mode:'bars', notes:[]},
+    6: {reveal:2025, mode:'cumulative', notes:[[2025,'£'+FILL.final,'per £100 of 2000 prices',acc,-16,'end']]}
+  };
+  const TITLES = {
+    line: 'UK CPI inflation, annual average (%)',
+    bars: 'Years above (red) and below (grey) the 2% target',
+    cumulative: 'Price level, 2000 = £100'
+  };
+
+  let current = -1;
+  function setState(s){
+    if (s === current) return; current = s;
+    const st = STATES[s], t = d3.transition().duration(800).ease(d3.easeCubicInOut);
+    document.getElementById('chartTitle').textContent = TITLES[st.mode];
+
+    clip.transition(t).attr('width', x(st.reveal + 0.5));
+    const isLine = st.mode === 'line', isBars = st.mode === 'bars', isCum = st.mode === 'cumulative';
+    gLine.transition(t).attr('opacity', isLine ? 1 : 0.12);
+    gLine.style('display', isCum ? 'none' : null);
+    target.transition(t).attr('opacity', isCum ? 0 : 1);
+
+    bars.transition(t).delay((d,i) => isBars ? i*18 : 0)
+      .attr('y', d => isBars ? yPct(d.cpi) : yPct(0))
+      .attr('height', d => isBars ? yPct(0) - yPct(d.cpi) : 0);
+
+    drawGrid(isCum ? yIdx : yPct, isCum ? (d => '£' + d) : (d => d + '%'));
+    cum.transition(t).attr('fill-opacity', isCum ? 0.14 : 0);
+    cumLine.transition(t).attr('opacity', isCum ? 1 : 0);
+
+    if (st.band){
+      band.attr('fill', st.bandColour).attr('x', x(st.band[0]-0.5)).attr('width', x(st.band[1]+0.5)-x(st.band[0]-0.5))
+          .transition(t).attr('fill-opacity', 0.08);
+    } else band.transition(t).attr('fill-opacity', 0);
+
+    notes.selectAll('*').interrupt().remove();
+    st.notes.forEach(([yr, label, sub, col, dy, anchor]) => {
+      const d = by(Math.round(yr)) || by(2003);
+      const px = x(yr), py = isCum ? yIdx(d.index) : (anchor === 'mid' ? yPct(1.6) : yPct(d.cpi));
+      const g = notes.append('g').attr('opacity', 0);
+      g.append('line').attr('x1',px).attr('x2',px).attr('y1',py-5).attr('y2',py+dy+8).attr('stroke',col).attr('stroke-width',1);
+      if (!isCum && anchor !== 'mid') g.append('circle').attr('cx',px).attr('cy',py).attr('r',5.5).attr('fill',col);
+      const ta = anchor === 'end' ? 'end' : 'middle';
+      g.append('text').attr('x',px + (ta==='end'?6:0)).attr('y',py+dy-8).attr('text-anchor',ta).attr('fill',col).attr('font-size',15).text(label);
+      g.append('text').attr('class','sub').attr('x',px + (ta==='end'?6:0)).attr('y',py+dy+4).attr('text-anchor',ta).text(sub);
+      g.transition().delay(450).duration(400).attr('opacity',1);
+    });
+  }
+  setState(0);
+
+  // ---------- 5. SCROLL TRIGGERS ----------
+  const steps = document.querySelectorAll('.step');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      steps.forEach(s => s.classList.remove('active'));
+      e.target.classList.add('active');
+      setState(+e.target.dataset.step);
+    });
+  }, {rootMargin: '-45% 0px -45% 0px'});
+  steps.forEach(s => io.observe(s));
+
+  // reading progress bar
+  const bar = document.getElementById('progress');
+  addEventListener('scroll', () => {
+    const h = document.documentElement.scrollHeight - innerHeight;
+    bar.style.width = (h > 0 ? scrollY / h * 100 : 0) + '%';
+  }, {passive:true});
+})();
+</script>
+</body>
+</html>
